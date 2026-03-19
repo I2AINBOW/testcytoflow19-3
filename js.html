@@ -170,7 +170,6 @@ const app = createApp({
             hasPatho: false, pathoName: '', pathoDate: '', pathoTime: ''
         });
 
-        // --- Watcher สำหรับอัปเดต Comment เรียลไทม์แก้ปัญหาใน PDF เป็นเครื่องหมายขีด (-) ---
         watch([() => ui.commentSelect, () => ui.commentOtherText], ([sel, other]) => {
             if (sel === 'Other') {
                 formReport.comment = 'Other : ' + other;
@@ -179,12 +178,10 @@ const app = createApp({
             }
         });
 
-        // --- Frontend Audit Logger ---
         const frontendLog = async (action, detail, username) => {
             try { await runGas('apiFrontendLog', action, detail, username || 'Unknown'); } catch(e){}
         };
 
-        // --- Preferences System ---
         const PREFS_KEY = 'cytoPrefs_v99';
         const loadPrefs = () => {
             try {
@@ -225,13 +222,12 @@ const app = createApp({
             if (page.value !== 'login') savePrefs();
         }, { deep: true });
 
-        // --- Computed AI Smart Blur Condition Logic ---
         const hasData100 = computed(() => formReport.organismSelections.length > 0 || formReport.nonNeoSelections.length > 0 || !!formReport.organismOtherText || ui.showOrganismList || ui.showNonNeoList);
         const hasData200Sq = computed(() => !!formReport.squamousMain);
         const hasData200Gl = computed(() => !!formReport.glandularMain);
         const hasData300 = computed(() => !!formReport.cat300);
         const hasDataComment = computed(() => !!ui.commentSelect || !!ui.commentOtherText);
-        
+
         const historicalOptions = computed(() => {
             if (!currentReportOriginalData) return [];
             return patientHistoryData.value.filter(x => x.cytoNo !== currentReportOriginalData.cytoNo && x.status === 'Reported');
@@ -269,7 +265,6 @@ const app = createApp({
             }
         };
 
-        // --- AFK / SESSION TIMEOUT LOGIC ---
         const AFK_LIMIT_MS = 25 * 60 * 1000; 
         const SESSION_LIMIT_MS = 60 * 60 * 1000; 
 
@@ -384,7 +379,6 @@ const app = createApp({
             }
         };
 
-        // --- COMPUTED PROPERTIES & RBAC ---
         const progressPercent = computed(() => {
             return stats.total === 0 ? 0 : Math.round((stats.reported / stats.total) * 100);
         });
@@ -510,7 +504,6 @@ const app = createApp({
             }
         };
 
-        // สำหรับ HTML Dashboard (Tailwind Classes)
         const getMethodColor = (val) => {
             if (!masterSpecimenType.value) return 'text-slate-500 font-bold';
             const idx = masterSpecimenType.value.indexOf(val);
@@ -520,7 +513,6 @@ const app = createApp({
             return 'text-slate-500 font-bold';
         };
 
-        // สำหรับหน้าจอรายงานผลตัวหนังสือปกติ
         const getMethodTextColor = (val) => {
             if (!masterSpecimenType.value) return 'text-slate-700';
             const idx = masterSpecimenType.value.indexOf(val);
@@ -530,16 +522,14 @@ const app = createApp({
             return 'text-slate-700';
         };
 
-        // สำหรับหน้า PDF ป้องกันสีเพี้ยนตอนพริ้นท์ให้ใช้ Style บังคับ
         const getMethodColorStyle = (val) => {
             if (!masterSpecimenType.value) return { color: '#334155' };
             const idx = masterSpecimenType.value.indexOf(val);
-            if (idx === 1) return { color: '#4338ca' }; // indigo-700
-            if (idx === 2) return { color: '#047857' }; // emerald-700
-            return { color: '#334155' }; // slate-700
+            if (idx === 1) return { color: '#4338ca' }; 
+            if (idx === 2) return { color: '#047857' }; 
+            return { color: '#334155' }; 
         };
 
-        // ระบบ Auto-Sex ตามคำนำหน้า
         watch(() => formReg.prefix, (newVal) => {
             const found = prefixesData.value.find(p => p.prefix === newVal);
             if (found && found.sex) {
@@ -549,7 +539,6 @@ const app = createApp({
             }
         });
 
-        // Formatting ตัดเลขรหัส 3 ตัวและอักขระที่ไม่จำเป็นออก
         const formatNoCode = (str) => {
             if (!str) return '';
             return str.replace(/^\d{3}\s*(?:-\s*)?/, '').trim();
@@ -565,14 +554,12 @@ const app = createApp({
             }).join(', ');
         };
 
-        // สำหรับหน้า PDF ไม่แสดงคำว่า Other หากข้อมูลเริ่มต้นด้วย Other : 
         const formatCommentPdf = (commentStr) => {
             if (!commentStr) return '-';
             if (commentStr.startsWith('Other : ')) return commentStr.replace('Other : ', '');
             return commentStr;
         };
 
-        // --- PDF LOGO BASE64 GENERATOR ---
         const hospitalLogoUrl = 'https://drive.google.com/thumbnail?id=1OYPsStfO6aYigu6ChIbiYTu4pwqMlXMA&sz=w400';
         const hospitalLogoBase64 = ref('');
         let isFetchingLogo = false;
@@ -606,15 +593,29 @@ const app = createApp({
         };
 
         // --- MPI (MASTER PATIENT INDEX) LOGIC ---
+        // Helper: ดึงเฉพาะตัวเลขจาก Cyto No (เช่น 690001 -> 690001) เพื่อใช้ในการเทียบใหม่-เก่า
+        const parseCytoNo = (cytoNoStr) => {
+            if (!cytoNoStr) return 0;
+            return parseInt(cytoNoStr.replace(/\D/g, '')) || 0;
+        };
         
-        // ฟังก์ชันดึงประวัติแบบเงียบ (เพื่อโหลดเข้า Dropdown ใน PDF)
-        const fetchPatientHistorySilent = async (cid) => {
+        const fetchPatientHistorySilent = async (patientObjOrCid) => {
+            // รับค่าเผื่อเป็น Object หรือ String ก็ทำงานได้
+            let cid = typeof patientObjOrCid === 'object' ? patientObjOrCid.cid : patientObjOrCid;
+            let currentCyto = typeof patientObjOrCid === 'object' ? parseCytoNo(patientObjOrCid.cytoNo) : (currentReportOriginalData ? parseCytoNo(currentReportOriginalData.cytoNo) : 999999999);
+
+            if (!cid) return;
             isHistoryPreloading.value = true;
             try {
                 const res = await runGas('apiGetPatientHistory', cid, user.username);
                 if (res && res.status === 'success') {
-                    // เรียงลำดับ Cyto No. จากมากไปน้อย (ใหม่ไปเก่า)
-                    patientHistoryData.value = (res.data || []).sort((a, b) => b.cytoNo.localeCompare(a.cytoNo));
+                    let historyList = res.data || [];
+                    
+                    // ป้องกันการนำประวัติที่ "ใหม่กว่า" ปัจจุบันมาแสดง
+                    historyList = historyList.filter(h => parseCytoNo(h.cytoNo) <= currentCyto);
+                    
+                    // บังคับเรียงใหม่สุด -> เก่าสุด (เลข Cyto มาก -> น้อย)
+                    patientHistoryData.value = historyList.sort((a, b) => parseCytoNo(b.cytoNo) - parseCytoNo(a.cytoNo));
                 }
             } catch (e) {
                 console.error("Silent history fetch error:", e);
@@ -623,18 +624,20 @@ const app = createApp({
             }
         };
 
-        // ฟังก์ชันดึงประวัติและโชว์ Modal
-        const fetchPatientHistory = async (cid) => {
+        const fetchPatientHistory = async (patientObjOrCid) => {
+            let cid = typeof patientObjOrCid === 'object' ? patientObjOrCid.cid : patientObjOrCid;
+            let currentCyto = typeof patientObjOrCid === 'object' ? parseCytoNo(patientObjOrCid.cytoNo) : (currentReportOriginalData ? parseCytoNo(currentReportOriginalData.cytoNo) : 999999999);
+
             if (!cid || String(cid).trim() === '') {
                 if(typeof Swal !== 'undefined') Swal.fire('ไม่พบข้อมูล', 'ผู้ป่วยรายนี้ไม่มีเลขประจำตัวประชาชน (CID) ในระบบ', 'warning');
                 return;
             }
-            if (isHistoryPreloading.value) return; // หากกำลังโหลดอยู่ ห้ามคลิกซ้ำ
+            if (isHistoryPreloading.value || isHistoryLoading.value) return; 
 
             historySearchCid.value = cid;
             showHistoryModal.value = true;
             
-            // ข้ามการโหลดซ้ำ หากมีข้อมูลประวัติของ CID นี้อยู่แล้ว
+            // หากมีข้อมูลเดิมที่ตรงกันอยู่แล้ว ข้ามการโหลดซ้ำ
             if (patientHistoryData.value.length > 0 && patientHistoryData.value[0].cid === cid) {
                  return;
             }
@@ -643,8 +646,13 @@ const app = createApp({
             try {
                 const res = await runGas('apiGetPatientHistory', cid, user.username);
                 if (res && res.status === 'success') {
-                    // เรียงลำดับ Cyto No. จากมากไปน้อย (ใหม่ไปเก่า)
-                    patientHistoryData.value = (res.data || []).sort((a, b) => b.cytoNo.localeCompare(a.cytoNo));
+                    let historyList = res.data || [];
+                    
+                    // ป้องกันการนำประวัติที่ "ใหม่กว่า" ปัจจุบันมาแสดง
+                    historyList = historyList.filter(h => parseCytoNo(h.cytoNo) <= currentCyto);
+                    
+                    // บังคับเรียงใหม่สุด -> เก่าสุด (เลข Cyto มาก -> น้อย)
+                    patientHistoryData.value = historyList.sort((a, b) => parseCytoNo(b.cytoNo) - parseCytoNo(a.cytoNo));
                 } else {
                     if(typeof Swal !== 'undefined') Swal.fire('ข้อผิดพลาด', res.message, 'error');
                 }
@@ -655,7 +663,6 @@ const app = createApp({
             }
         };
 
-        // สลับดูรายงานย้อนหลังในหน้า PDF Preview
         const viewHistoricalReport = () => {
             if (selectedHistoricalReport.value === 'current') {
                 isViewingHistory.value = false;
@@ -669,10 +676,8 @@ const app = createApp({
                     populateReportForm(historyItem);
                 }
             }
-            // รีเจเนอเรต Barcode เสมอเมื่อสลับคน
             generateBarcode();
         };
-
 
         watch(() => page.value, async (newPage, oldPage) => {
             if (newPage === 'statistics' && oldPage !== 'statistics') {
@@ -1374,7 +1379,6 @@ const app = createApp({
             return `${parseInt(day)}/${parseInt(month)}/${year}, ${timeVal}:00`;
         };
 
-        // โหลดข้อมูลเข้าฟอร์มสำหรับ Report/Preview
         const populateReportForm = (patient) => {
             formReport.rowId = patient.rowId; 
             formReport.cytoNo = patient.cytoNo; 
@@ -1447,7 +1451,6 @@ const app = createApp({
 
             formReport.cat300 = patient.cat300 || '';
 
-            // --- จัดการส่วน Comment ตามเงื่อนไขใหม่ ---
             if (patient.comment && patient.comment.startsWith('Other : ')) {
                 ui.commentSelect = 'Other';
                 ui.commentOtherText = patient.comment.replace('Other : ', '');
@@ -1456,11 +1459,10 @@ const app = createApp({
                 ui.commentOtherText = '';
             }
 
-            // Signatures (ปรับให้ค่าเริ่มต้นโชว์คำว่า เลือกผู้รายงาน...)
             if (patient.status === 'Reported' && patient.cytoName) {
                 formReport.cytoName = patient.cytoName;
             } else {
-                formReport.cytoName = ''; // บังคับเป็นค่าว่างเพื่อให้ dropdown กลับไปที่ Placeholder เสมอ
+                formReport.cytoName = ''; 
             }
             
             if (patient.cytoDateTime) {
@@ -1488,28 +1490,26 @@ const app = createApp({
 
         const openReportForm = (patient, isViewOnly = false) => {
             viewMode.value = isViewOnly;
-            currentReportOriginalData = JSON.parse(JSON.stringify(patient)); // เผื่อสลับไปดู MPI แล้วสลับกลับมา
+            currentReportOriginalData = JSON.parse(JSON.stringify(patient)); 
             populateReportForm(patient);
             page.value = 'report_form';
             
-            // Auto-fetch History (Preload) เมื่อเข้ามาหน้ารายงานผล
             if (patient.cid && patient.cid.trim() !== '') {
-                fetchPatientHistorySilent(patient.cid);
+                fetchPatientHistorySilent(patient);
             }
         };
 
         const openReportPreview = (patient) => {
-            currentReportOriginalData = JSON.parse(JSON.stringify(patient)); // สำรองข้อมูลปัจจุบัน
+            currentReportOriginalData = JSON.parse(JSON.stringify(patient)); 
             isViewingHistory.value = false;
             selectedHistoricalReport.value = 'current';
-            patientHistoryData.value = []; // รีเซ็ต Dropdown
+            patientHistoryData.value = []; 
             
             populateReportForm(patient);
             page.value = 'report_preview';
 
-            // Auto-fetch History for Dropdown List
             if (patient.cid && patient.cid.trim() !== '') {
-                fetchPatientHistorySilent(patient.cid);
+                fetchPatientHistorySilent(patient);
             }
         };
 
@@ -1551,7 +1551,6 @@ const app = createApp({
                         
                         cat300: formReport.cat300,
                         
-                        // Comment ส่งค่าขึ้น DB
                         comment: ui.commentSelect === 'Other' ? ('Other : ' + ui.commentOtherText) : ui.commentSelect,
                         
                         cytoName: formReport.cytoName,
@@ -1585,7 +1584,7 @@ const app = createApp({
         };
 
         const executePrint = () => {
-            frontendLog("Print PDF", "User printed report: " + formReport.cytoNo, user.username);
+            frontendLog("Initiated Print / PDF", "User opened print dialog for report: " + formReport.cytoNo, user.username);
             window.print();
         };
 
@@ -1601,7 +1600,6 @@ const app = createApp({
         };
 
         const openChangePassword = async () => {
-            // ลบคำสั่ง showSettingsModal.value = false; ออกเพื่อให้ Modal ตั้งค่าอยู่ด้านหลังเหมือนเดิม
             const { value: formValues } = await Swal.fire({
                 title: 'เปลี่ยนรหัสผ่าน',
                 html:
