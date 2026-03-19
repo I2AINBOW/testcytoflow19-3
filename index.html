@@ -73,12 +73,12 @@
     <!-- History MPI Modal (NEW v1.3.7) -->
     <transition name="fade">
         <div v-if="showHistoryModal" @click.self="showHistoryModal=false" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
-            <div class="liquid-glass rounded-3xl w-full max-w-6xl p-0 shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden animate-slide-up">
+            <div class="liquid-glass rounded-3xl w-full max-w-[95vw] p-0 shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden animate-slide-up">
                 <!-- Header -->
                 <div class="p-5 border-b theme-border flex justify-between items-center bg-white/50 backdrop-blur-md">
                     <div>
-                        <h3 class="text-2xl font-black theme-text flex items-center gap-2"><i class="ph ph-clock-counter-clockwise text-indigo-500 text-3xl"></i> ประวัติผลการตรวจย้อนหลัง (MPI)</h3>
-                        <p class="text-sm theme-text-muted font-bold mt-1 tracking-wide">CID: <span class="text-indigo-600">{{ historySearchCid }}</span> <span class="mx-2">|</span> แสดงผลประวัติที่เกี่ยวข้อง <span class="text-indigo-600">{{ patientHistoryData.length }}</span> รายการ</p>
+                        <h3 class="text-2xl font-black theme-text flex items-center gap-2"><i class="ph ph-clock-counter-clockwise text-indigo-500 text-3xl"></i> ผลการตรวจย้อนหลัง (MPI)</h3>
+                        <p class="text-sm theme-text-muted font-bold mt-1 tracking-wide">CID: <span class="text-indigo-600">{{ historySearchCid }}</span> <span class="mx-2">|</span> แสดงประวัติที่เกี่ยวข้อง <span class="text-indigo-600">{{ patientHistoryData.length }}</span> รายการ</p>
                     </div>
                     <button @click="showHistoryModal=false" class="text-slate-400 hover:text-rose-500 text-3xl font-bold transition w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5">&times;</button>
                 </div>
@@ -97,38 +97,46 @@
                             <thead class="sticky top-0 z-40 shadow-sm">
                                 <tr>
                                     <th class="p-4 border-b border-r theme-border bg-slate-100 font-bold text-slate-700 sticky left-0 z-50 w-48 text-[13px] uppercase tracking-wider shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Cyto No.</th>
-                                    <th v-for="(h, idx) in patientHistoryData" :key="h.cytoNo" class="p-4 border-b border-r border-indigo-100 text-center min-w-[250px] relative bg-white z-40" :class="idx === 0 ? 'mpi-latest-col-header' : 'bg-slate-50'">
+                                    <th v-for="(h, idx) in patientHistoryData" :key="h.cytoNo" class="p-4 border-b border-r border-indigo-100 text-center min-w-[260px] relative bg-white z-40" :class="idx === 0 ? 'mpi-latest-col-header' : 'bg-slate-50'">
                                         <div class="font-black text-lg leading-none" :class="idx === 0 ? 'text-indigo-700' : 'text-slate-600'">{{ h.cytoNo }}</div>
                                         <div class="text-[11px] font-bold mt-1 uppercase tracking-widest inline-block px-2 py-0.5 rounded-full" :class="idx === 0 ? 'bg-indigo-100/50 text-indigo-500' : 'bg-slate-200 text-slate-500'">ปี {{ h.dbYear }} <span v-if="idx === 0">(รายการนี้)</span></div>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody class="text-[13px]">
-                                <!-- ชื่อ-สกุล -->
+                                <!-- ข้อมูลผู้ป่วย (รวม คำนำหน้า ชื่อ สกุล อายุ เพศ) -->
                                 <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">ชื่อ-สกุล</td>
-                                    <td v-for="(h, idx) in patientHistoryData" :key="'name-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center font-medium relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col' : ''">{{ h.prefix }}{{ h.fname }} {{ h.lname }}</td>
+                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm align-top">ข้อมูลผู้ป่วย</td>
+                                    <td v-for="(h, idx) in patientHistoryData" :key="'pat-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center relative z-10 bg-white align-top" :class="idx === 0 ? 'mpi-latest-col' : ''">
+                                        <div class="font-bold text-slate-800 text-[14px]">{{ h.prefix }}{{ h.fname }} {{ h.lname }}</div>
+                                        <div class="text-[12px] text-slate-500 mt-1 flex items-center justify-center gap-2">
+                                            <span class="bg-slate-100 px-2 py-0.5 rounded-md">อายุ {{ h.age }} ปี</span>
+                                            <span class="bg-slate-100 px-2 py-0.5 rounded-md">เพศ: {{ h.sex }}</span>
+                                        </div>
+                                    </td>
                                 </tr>
-                                <!-- อายุ -->
+                                
+                                <!-- วันที่รับสิ่งส่งตรวจ -->
                                 <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">อายุ</td>
-                                    <td v-for="(h, idx) in patientHistoryData" :key="'age-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center font-medium relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col' : ''">{{ h.age }} ปี</td>
+                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">วันที่รับสิ่งส่งตรวจ</td>
+                                    <td v-for="(h, idx) in patientHistoryData" :key="'rec-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center font-medium relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col' : ''">
+                                        <span class="bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-md border border-blue-100"><i class="ph ph-calendar-blank mr-1"></i>{{ formatDisplayDate(h.recDate) }}</span>
+                                    </td>
                                 </tr>
-                                <!-- Diagnosis -->
+
+                                <!-- ข้อมูลทางคลินิก (รวม Dx, Clin.Find, Last Pap) -->
                                 <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">Diagnosis</td>
-                                    <td v-for="(h, idx) in patientHistoryData" :key="'dx-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col' : ''"><span class="font-bold text-slate-700">{{ h.clinDx || '-' }}</span></td>
+                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm align-top">ข้อมูลทางคลินิก</td>
+                                    <td v-for="(h, idx) in patientHistoryData" :key="'clin-'+h.cytoNo" class="p-4 border-b border-r border-slate-200 relative z-10 bg-white align-top text-left" :class="idx === 0 ? 'mpi-latest-col' : ''">
+                                        <div class="space-y-2 text-[12px]">
+                                            <div v-if="h.clinDx" class="flex gap-2 items-start"><span class="font-bold text-slate-400 uppercase w-[3rem] shrink-0 text-right bg-slate-100 px-1 rounded">Dx:</span> <span class="font-bold text-slate-800 leading-tight">{{ h.clinDx }}</span></div>
+                                            <div v-if="h.clinFind" class="flex gap-2 items-start"><span class="font-bold text-slate-400 uppercase w-[3rem] shrink-0 text-right bg-slate-100 px-1 rounded">Find:</span> <span class="text-slate-600 leading-tight">{{ h.clinFind }}</span></div>
+                                            <div v-if="h.lastPap" class="flex gap-2 items-start"><span class="font-bold text-slate-400 uppercase w-[3rem] shrink-0 text-right bg-slate-100 px-1 rounded">Pap:</span> <span class="text-slate-600 leading-tight">{{ h.lastPap }}</span></div>
+                                            <div v-if="!h.clinDx && !h.clinFind && !h.lastPap" class="text-slate-400 text-center italic py-2">ไม่มีข้อมูลคลินิก</div>
+                                        </div>
+                                    </td>
                                 </tr>
-                                <!-- Clin.Find -->
-                                <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">Clin.Find</td>
-                                    <td v-for="(h, idx) in patientHistoryData" :key="'cf-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col' : ''"><div class="text-[12px] text-slate-600 truncate max-w-[220px] mx-auto" :title="h.clinFind">{{ h.clinFind || '-' }}</div></td>
-                                </tr>
-                                <!-- Last Pap -->
-                                <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">Last Pap (5 yrs)</td>
-                                    <td v-for="(h, idx) in patientHistoryData" :key="'pap-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col' : ''">{{ h.lastPap || '-' }}</td>
-                                </tr>
+                                
                                 <!-- ผลการตรวจ (Cytologic Report) -->
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm align-top">ผลการตรวจ<br>(Cytologic Report)</td>
@@ -141,7 +149,6 @@
                                                 <span class="font-bold text-slate-700 block text-[11px] uppercase">Adequacy</span>
                                                 <span class="text-emerald-700 font-medium">{{ h.adequacy }}</span>
                                                 <div v-if="h.adequacyDetail" class="text-slate-600 mt-0.5">- {{ h.adequacyDetail }}</div>
-                                                <!-- เพิ่ม Additional ให้อยู่ในกรอบ Adequacy -->
                                                 <div v-if="h.additional" class="text-slate-600 mt-0.5"><span class="font-medium">Add:</span> {{ h.additional }}</div>
                                             </div>
                                             <div v-if="h.organism || h.nonNeo" class="bg-violet-50/50 p-1.5 rounded border border-violet-100">
@@ -162,16 +169,18 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <!-- Comment -->
+                                <!-- Comment (Wrap lines for long text) -->
                                 <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">Comment</td>
-                                    <td v-for="(h, idx) in patientHistoryData" :key="'comment-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center text-[12px] relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col' : ''">{{ h.comment || '-' }}</td>
+                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm align-top">Comment</td>
+                                    <td v-for="(h, idx) in patientHistoryData" :key="'comment-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 relative z-10 bg-white align-top" :class="idx === 0 ? 'mpi-latest-col' : ''">
+                                        <div class="whitespace-pre-wrap break-words text-left text-[12px] leading-relaxed max-w-[250px] mx-auto text-slate-600">{{ h.comment || '-' }}</div>
+                                    </td>
                                 </tr>
                                 <!-- Cytotechnologist -->
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">Cytotechnologist</td>
                                     <td v-for="(h, idx) in patientHistoryData" :key="'cyto-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center font-medium relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col' : ''">
-                                        <div class="text-slate-700">{{ h.cytoName || '-' }}</div>
+                                        <div class="text-slate-700 font-bold">{{ h.cytoName || '-' }}</div>
                                         <div class="text-[10px] text-slate-500 mt-0.5">{{ h.cytoDateTime || '-' }}</div>
                                     </td>
                                 </tr>
@@ -179,7 +188,7 @@
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">Pathologist</td>
                                     <td v-for="(h, idx) in patientHistoryData" :key="'patho-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 text-center font-medium relative z-10 bg-white" :class="idx === 0 ? 'mpi-latest-col-bottom' : ''">
-                                        <div class="text-slate-700">{{ h.pathoName || '-' }}</div>
+                                        <div class="text-slate-700 font-bold">{{ h.pathoName || '-' }}</div>
                                         <div class="text-[10px] text-slate-500 mt-0.5">{{ h.pathoDateTime || '-' }}</div>
                                     </td>
                                 </tr>
