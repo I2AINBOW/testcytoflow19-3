@@ -106,7 +106,28 @@
   th.sticky, td.sticky {
       box-shadow: inset -1px 0 0 var(--border-color);
       clip-path: inset(0 -10px 0 0); /* ป้องกันเงาล้นไปฝั่งซ้าย */
+      background-color: #f8fafc !important; /* บังคับสีทึบ ป้องกันข้อความซ้อนกันตอนเลื่อน */
+      z-index: 40;
   }
+  
+  th.sticky {
+      z-index: 60 !important; /* มุมซ้ายบนสุดต้องอยู่บนสุด */
+  }
+
+  /* กรอบเน้นสีพาสเทลสำหรับคอลัมน์ผลล่าสุด (Current Record) */
+  .mpi-latest-col-header {
+      background-color: #eef2ff !important; 
+      box-shadow: inset 3px 3px 0px 0px #818cf8, inset -3px 0px 0px 0px #818cf8 !important;
+  }
+  .mpi-latest-col {
+      background-color: #ffffff !important;
+      box-shadow: inset 3px 0px 0px 0px #818cf8, inset -3px 0px 0px 0px #818cf8 !important;
+  }
+  .mpi-latest-col-bottom {
+      background-color: #ffffff !important;
+      box-shadow: inset 3px -3px 0px 0px #818cf8, inset -3px -3px 0px 0px #818cf8 !important;
+  }
+  
   /* -------------------------------------- */
 
   /* Transitions & Animations */
