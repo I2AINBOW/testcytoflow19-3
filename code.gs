@@ -5,10 +5,10 @@
 // --- DATABASE CONFIGURATION ---
 // นำ ID ของ Google Sheets ทั้ง 4 ไฟล์มาใส่ที่นี่
 const DB_FILES = {
-  SYSTEM: 'XXXX',      // [Sheets]: Master_Config
-  USER: 'XXXX',        // [Sheets]: User_Config
-  REF: 'XXXX',         // [Sheets]: Reference_Data_Config
-  LOG: 'XXXX'          // [Sheets]: Log_Config
+  SYSTEM: 'XXX',      // [Sheets]: Master_Config
+  USER: 'XXX',        // [Sheets]: User_Config
+  REF: 'XXX',         // [Sheets]: Reference_Data_Config
+  LOG: 'XXX'          // [Sheets]: Log_Config
 };
 
 function doGet() {
@@ -231,7 +231,6 @@ function apiGetNextCytoNo(year) {
 }
 
 // --- API: MPI / PREVIOUS RESULTS (NEW IN v1.3.7 AI Core) ---
-// ตรวจสอบประวัติผู้ป่วยจากเลข CID ข้ามทุกปีที่มีในระบบ
 function apiGetPatientHistory(cid, username) {
   if (!cid || String(cid).trim() === "") {
     return { status: 'error', message: 'กรุณาระบุเลขประจำตัวประชาชน (CID) เพื่อค้นหาประวัติ' };
@@ -241,9 +240,9 @@ function apiGetPatientHistory(cid, username) {
   let historyData = [];
   
   try {
-    // Audit Log for PDPA Compliance: บันทึกว่าใครค้นหาประวัติใคร
-    logSystem("View History (MPI)", "User requested history for CID: " + searchCid, username);
-
+    // หมายเหตุ: ยกเลิกการเก็บ Log ของการดูประวัติ (MPI) ตาม Request ของ User
+    // เนื่องจากเป็น Normal Behavior ของนักเทคนิคการแพทย์
+    
     const sysSS = SpreadsheetApp.openById(DB_FILES.SYSTEM);
     const configSheet = sysSS.getSheetByName('Year');
     if (!configSheet) throw new Error("ไม่พบแท็บ Year ในไฟล์ Master_Config");
@@ -273,8 +272,6 @@ function apiGetPatientHistory(cid, username) {
           const rowCid = String(data[r][2]).trim();
           
           if (rowCid === searchCid) {
-            // เจอข้อมูลที่ตรงกับ CID นำเข้าสู่ Array 
-            // โครงสร้างเดียวกับ apiGetDashboardData เพื่อให้ Frontend นำไปใช้ซ้ำได้ง่าย
             historyData.push({
               dbYear: year, // อ้างอิงปีของฐานข้อมูลนั้นๆ เผื่อกรณีต้องกลับไปอัปเดต
               rowId: r + 2,
@@ -325,14 +322,13 @@ function apiGetPatientHistory(cid, username) {
         }
       } catch (err) {
         console.log(`[History MPI] Error reading DB for year ${year}: ${err.message}`);
-        // ข้ามไปปีถัดไปหากปีไหน Sheet มีปัญหา จะได้ไม่ทำให้ระบบล่มทั้งหมด
       }
     }
 
-    // Sort ประวัติจากใหม่ล่าสุด ไปเก่าสุด โดยยึดจากวันที่รับ (recDate) หรือวันที่เก็บ (specimenDate)
+    // Sort ประวัติจากใหม่ล่าสุด ไปเก่าสุด โดยยึดจากวันที่รับ (recDate)
     historyData.sort((a, b) => {
-      const dateA = new Date(a.specimenDate || a.recDate || 0);
-      const dateB = new Date(b.specimenDate || b.recDate || 0);
+      const dateA = new Date(a.recDate || a.specimenDate || 0);
+      const dateB = new Date(b.recDate || b.specimenDate || 0);
       return dateB - dateA; // Descending
     });
 
