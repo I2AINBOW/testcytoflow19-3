@@ -124,15 +124,15 @@
                                     </td>
                                 </tr>
 
-                                <!-- ข้อมูลทางคลินิก (รวม Dx, Clin.Find, Last Pap) -->
+                                <!-- ข้อมูลทางคลินิก (รวม Dx, Clin.Find, Last Pap ให้อยู่ในบรรทัดเดียวกัน จัดกลาง) -->
                                 <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm align-top">ข้อมูลทางคลินิก</td>
-                                    <td v-for="(h, idx) in patientHistoryData" :key="'clin-'+h.cytoNo" class="p-4 border-b border-r border-slate-200 relative z-10 bg-white align-top text-left" :class="idx === 0 ? 'mpi-latest-col' : ''">
-                                        <div class="space-y-2 text-[12px]">
-                                            <div v-if="h.clinDx" class="flex gap-2 items-start"><span class="font-bold text-slate-400 uppercase w-[3rem] shrink-0 text-right bg-slate-100 px-1 rounded">Dx:</span> <span class="font-bold text-slate-800 leading-tight">{{ h.clinDx }}</span></div>
-                                            <div v-if="h.clinFind" class="flex gap-2 items-start"><span class="font-bold text-slate-400 uppercase w-[3rem] shrink-0 text-right bg-slate-100 px-1 rounded">Find:</span> <span class="text-slate-600 leading-tight">{{ h.clinFind }}</span></div>
-                                            <div v-if="h.lastPap" class="flex gap-2 items-start"><span class="font-bold text-slate-400 uppercase w-[3rem] shrink-0 text-right bg-slate-100 px-1 rounded">Pap:</span> <span class="text-slate-600 leading-tight">{{ h.lastPap }}</span></div>
-                                            <div v-if="!h.clinDx && !h.clinFind && !h.lastPap" class="text-slate-400 text-center italic py-2">ไม่มีข้อมูลคลินิก</div>
+                                    <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm align-middle">ข้อมูลทางคลินิก</td>
+                                    <td v-for="(h, idx) in patientHistoryData" :key="'clin-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 relative z-10 bg-white align-middle" :class="idx === 0 ? 'mpi-latest-col' : ''">
+                                        <div class="flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 text-[12px]">
+                                            <div v-if="h.clinDx" class="flex items-center gap-1"><span class="font-bold text-slate-400 uppercase bg-slate-100 px-1 rounded text-[10px]">Dx:</span> <span class="font-bold text-slate-800">{{ h.clinDx }}</span></div>
+                                            <div v-if="h.clinFind" class="flex items-center gap-1"><span class="font-bold text-slate-400 uppercase bg-slate-100 px-1 rounded text-[10px]">Find:</span> <span class="text-slate-600 max-w-[160px] truncate" :title="h.clinFind">{{ h.clinFind }}</span></div>
+                                            <div v-if="h.lastPap" class="flex items-center gap-1"><span class="font-bold text-slate-400 uppercase bg-slate-100 px-1 rounded text-[10px]">Pap5y:</span> <span class="text-slate-600">{{ h.lastPap }}</span></div>
+                                            <div v-if="!h.clinDx && !h.clinFind && !h.lastPap" class="text-slate-400 italic">ไม่มีข้อมูลคลินิก</div>
                                         </div>
                                     </td>
                                 </tr>
@@ -169,11 +169,11 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <!-- Comment (Wrap lines for long text) -->
+                                <!-- Comment (จัดชิดซ้าย และยกเลิกการบังคับจำกัดความกว้าง เพื่อให้แสดงยาวได้ตามพื้นที่) -->
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="p-3 border-b border-r theme-border font-bold bg-slate-50/95 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm align-top">Comment</td>
                                     <td v-for="(h, idx) in patientHistoryData" :key="'comment-'+h.cytoNo" class="p-3 border-b border-r border-slate-200 relative z-10 bg-white align-top" :class="idx === 0 ? 'mpi-latest-col' : ''">
-                                        <div class="whitespace-pre-wrap break-words text-left text-[12px] leading-relaxed max-w-[250px] mx-auto text-slate-600">{{ h.comment || '-' }}</div>
+                                        <div class="whitespace-pre-wrap break-words text-left text-[12px] leading-relaxed text-slate-700 w-full px-1">{{ h.comment || '-' }}</div>
                                     </td>
                                 </tr>
                                 <!-- Cytotechnologist -->
@@ -1291,7 +1291,7 @@
                         <div class="flex items-center gap-2 flex-1 justify-end">
                             <div v-if="patientHistoryData.length > 0 && !isHistoryPreloading" class="relative group hidden sm:block">
                                 <select v-model="selectedHistoricalReport" @change="viewHistoricalReport" class="bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-3 py-2 rounded-lg appearance-none pr-8 cursor-pointer focus:ring-2 focus:ring-indigo-400 text-sm">
-                                    <option value="current">ปัจจุบัน: {{ currentReportOriginalData ? currentReportOriginalData.cytoNo : '' }} ({{ currentReportOriginalData ? formatDisplayDate(currentReportOriginalData.recDate) : '' }})</option>
+                                    <option value="current">ปัจจุบัน</option>
                                     <option v-for="h in historicalOptions" :key="h.cytoNo" :value="h.cytoNo">
                                         ย้อนหลัง: {{ h.cytoNo }} ({{ formatDisplayDate(h.recDate) }})
                                     </option>
