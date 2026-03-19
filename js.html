@@ -56,7 +56,7 @@ const app = createApp({
         const historySearchCid = ref('');
         const selectedHistoricalReport = ref('current');
         const isViewingHistory = ref(false);
-        let currentReportOriginalData = null; // เก็บ backup ข้อมูลรายงานปัจจุบันไว้สลับคืน
+        const currentReportOriginalData = ref(null); // ใช้ ref เพื่อให้ Vue อัปเดต UI ทันที (แก้บัค Dropdown โล่ง)
 
         const user = reactive({ 
             name: '', 
@@ -170,6 +170,7 @@ const app = createApp({
             hasPatho: false, pathoName: '', pathoDate: '', pathoTime: ''
         });
 
+        // --- Watcher สำหรับอัปเดต Comment เรียลไทม์ ---
         watch([() => ui.commentSelect, () => ui.commentOtherText], ([sel, other]) => {
             if (sel === 'Other') {
                 formReport.comment = 'Other : ' + other;
@@ -178,10 +179,12 @@ const app = createApp({
             }
         });
 
+        // --- Frontend Audit Logger ---
         const frontendLog = async (action, detail, username) => {
             try { await runGas('apiFrontendLog', action, detail, username || 'Unknown'); } catch(e){}
         };
 
+        // --- Preferences System ---
         const PREFS_KEY = 'cytoPrefs_v99';
         const loadPrefs = () => {
             try {
@@ -222,6 +225,7 @@ const app = createApp({
             if (page.value !== 'login') savePrefs();
         }, { deep: true });
 
+        // --- Computed AI Smart Blur Condition Logic ---
         const hasData100 = computed(() => formReport.organismSelections.length > 0 || formReport.nonNeoSelections.length > 0 || !!formReport.organismOtherText || ui.showOrganismList || ui.showNonNeoList);
         const hasData200Sq = computed(() => !!formReport.squamousMain);
         const hasData200Gl = computed(() => !!formReport.glandularMain);
@@ -229,8 +233,8 @@ const app = createApp({
         const hasDataComment = computed(() => !!ui.commentSelect || !!ui.commentOtherText);
 
         const historicalOptions = computed(() => {
-            if (!currentReportOriginalData) return [];
-            return patientHistoryData.value.filter(x => x.cytoNo !== currentReportOriginalData.cytoNo && x.status === 'Reported');
+            if (!currentReportOriginalData.value) return [];
+            return patientHistoryData.value.filter(x => x.cytoNo !== currentReportOriginalData.value.cytoNo && x.status === 'Reported');
         });
 
         watch(() => formReport.squamousMain, (newVal, oldVal) => {
@@ -265,6 +269,7 @@ const app = createApp({
             }
         };
 
+        // --- AFK / SESSION TIMEOUT LOGIC ---
         const AFK_LIMIT_MS = 25 * 60 * 1000; 
         const SESSION_LIMIT_MS = 60 * 60 * 1000; 
 
@@ -593,7 +598,8 @@ const app = createApp({
         };
 
         // --- MPI (MASTER PATIENT INDEX) LOGIC ---
-        // Helper: ดึงเฉพาะตัวเลขจาก Cyto No (เช่น 690001 -> 690001) เพื่อใช้ในการเทียบใหม่-เก่า
+        
+        // Helper: ดึงเฉพาะตัวเลขจาก Cyto No (เช่น 690001 -> 690001) เพื่อใช้ในการเทียบใหม่-เก่า (Sorting)
         const parseCytoNo = (cytoNoStr) => {
             if (!cytoNoStr) return 0;
             return parseInt(cytoNoStr.replace(/\D/g, '')) || 0;
@@ -602,7 +608,7 @@ const app = createApp({
         const fetchPatientHistorySilent = async (patientObjOrCid) => {
             // รับค่าเผื่อเป็น Object หรือ String ก็ทำงานได้
             let cid = typeof patientObjOrCid === 'object' ? patientObjOrCid.cid : patientObjOrCid;
-            let currentCyto = typeof patientObjOrCid === 'object' ? parseCytoNo(patientObjOrCid.cytoNo) : (currentReportOriginalData ? parseCytoNo(currentReportOriginalData.cytoNo) : 999999999);
+            let currentCyto = typeof patientObjOrCid === 'object' ? parseCytoNo(patientObjOrCid.cytoNo) : (currentReportOriginalData.value ? parseCytoNo(currentReportOriginalData.value.cytoNo) : 999999999);
 
             if (!cid) return;
             isHistoryPreloading.value = true;
@@ -614,7 +620,7 @@ const app = createApp({
                     // ป้องกันการนำประวัติที่ "ใหม่กว่า" ปัจจุบันมาแสดง
                     historyList = historyList.filter(h => parseCytoNo(h.cytoNo) <= currentCyto);
                     
-                    // บังคับเรียงใหม่สุด -> เก่าสุด (เลข Cyto มาก -> น้อย)
+                    // บังคับเรียงใหม่สุด -> เก่าสุด (เลข Cyto มาก -> น้อย) เพื่อให้แสดงผลจากซ้ายไปขวา
                     patientHistoryData.value = historyList.sort((a, b) => parseCytoNo(b.cytoNo) - parseCytoNo(a.cytoNo));
                 }
             } catch (e) {
@@ -626,7 +632,7 @@ const app = createApp({
 
         const fetchPatientHistory = async (patientObjOrCid) => {
             let cid = typeof patientObjOrCid === 'object' ? patientObjOrCid.cid : patientObjOrCid;
-            let currentCyto = typeof patientObjOrCid === 'object' ? parseCytoNo(patientObjOrCid.cytoNo) : (currentReportOriginalData ? parseCytoNo(currentReportOriginalData.cytoNo) : 999999999);
+            let currentCyto = typeof patientObjOrCid === 'object' ? parseCytoNo(patientObjOrCid.cytoNo) : (currentReportOriginalData.value ? parseCytoNo(currentReportOriginalData.value.cytoNo) : 999999999);
 
             if (!cid || String(cid).trim() === '') {
                 if(typeof Swal !== 'undefined') Swal.fire('ไม่พบข้อมูล', 'ผู้ป่วยรายนี้ไม่มีเลขประจำตัวประชาชน (CID) ในระบบ', 'warning');
@@ -651,7 +657,7 @@ const app = createApp({
                     // ป้องกันการนำประวัติที่ "ใหม่กว่า" ปัจจุบันมาแสดง
                     historyList = historyList.filter(h => parseCytoNo(h.cytoNo) <= currentCyto);
                     
-                    // บังคับเรียงใหม่สุด -> เก่าสุด (เลข Cyto มาก -> น้อย)
+                    // บังคับเรียงใหม่สุด -> เก่าสุด (เลข Cyto มาก -> น้อย) ซ้ายไปขวา
                     patientHistoryData.value = historyList.sort((a, b) => parseCytoNo(b.cytoNo) - parseCytoNo(a.cytoNo));
                 } else {
                     if(typeof Swal !== 'undefined') Swal.fire('ข้อผิดพลาด', res.message, 'error');
@@ -666,8 +672,8 @@ const app = createApp({
         const viewHistoricalReport = () => {
             if (selectedHistoricalReport.value === 'current') {
                 isViewingHistory.value = false;
-                if (currentReportOriginalData) {
-                    populateReportForm(currentReportOriginalData);
+                if (currentReportOriginalData.value) {
+                    populateReportForm(currentReportOriginalData.value);
                 }
             } else {
                 const historyItem = patientHistoryData.value.find(h => h.cytoNo === selectedHistoricalReport.value);
@@ -1490,7 +1496,7 @@ const app = createApp({
 
         const openReportForm = (patient, isViewOnly = false) => {
             viewMode.value = isViewOnly;
-            currentReportOriginalData = JSON.parse(JSON.stringify(patient)); 
+            currentReportOriginalData.value = JSON.parse(JSON.stringify(patient)); 
             populateReportForm(patient);
             page.value = 'report_form';
             
@@ -1500,7 +1506,7 @@ const app = createApp({
         };
 
         const openReportPreview = (patient) => {
-            currentReportOriginalData = JSON.parse(JSON.stringify(patient)); 
+            currentReportOriginalData.value = JSON.parse(JSON.stringify(patient)); 
             isViewingHistory.value = false;
             selectedHistoricalReport.value = 'current';
             patientHistoryData.value = []; 
