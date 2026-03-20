@@ -92,7 +92,6 @@
 
   /* --- NEW v1.3.7: Animations & Effects --- */
   
-  /* Stamp Animation สำหรับลายน้ำ Historical Result */
   @keyframes stampEffect {
       0% { opacity: 0; transform: scale(1.5) rotate(-45deg); }
       60% { opacity: 1; transform: scale(0.9) rotate(-45deg); }
@@ -102,19 +101,17 @@
       animation: stampEffect 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
 
-  /* ทำให้คอลัมน์ที่ Sticky ในตาราง MPI ดูมีมิติเวลามีข้อมูลไหลผ่านด้านล่าง */
   th.sticky, td.sticky {
       box-shadow: inset -1px 0 0 var(--border-color);
-      clip-path: inset(0 -10px 0 0); /* ป้องกันเงาล้นไปฝั่งซ้าย */
-      background-color: #f8fafc !important; /* บังคับสีทึบ ป้องกันข้อความซ้อนกันตอนเลื่อน */
+      clip-path: inset(0 -10px 0 0); 
+      background-color: #f8fafc !important; 
       z-index: 40;
   }
   
   th.sticky {
-      z-index: 60 !important; /* มุมซ้ายบนสุดต้องอยู่บนสุด */
+      z-index: 60 !important; 
   }
 
-  /* กรอบเน้นสีพาสเทลสำหรับคอลัมน์ผลล่าสุด (Current Record) */
   .mpi-latest-col-header {
       background-color: #eef2ff !important; 
       box-shadow: inset 3px 3px 0px 0px #818cf8, inset -3px 0px 0px 0px #818cf8 !important;
@@ -128,6 +125,42 @@
       box-shadow: inset 3px -3px 0px 0px #818cf8, inset -3px -3px 0px 0px #818cf8 !important;
   }
   
+  .preview-comment-box {
+      background-color: #ffffff !important;
+      border: 1px solid #cbd5e1;
+  }
+
+  /* --- MPI Table Fixed Layout --- */
+  .mpi-table-wrapper {
+      background-color: #f1f5f9; /* สีพื้นหลังของช่องว่างทางขวาเวลามีประวัติไม่เต็ม 3 คอลัมน์ */
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .mpi-table {
+      table-layout: fixed; /* บังคับความกว้างคอลัมน์ไม่ให้ยืดตามเนื้อหา */
+      width: max-content; /* ขนาดตารางรวมกันเท่ากับขนาดคอลัมน์ที่มีอยู่จริง */
+      background-color: #ffffff;
+  }
+  .mpi-header-col {
+      width: 140px; 
+      min-width: 140px; 
+      max-width: 140px;
+  }
+  .mpi-data-col {
+      /* คำนวณความกว้าง: ความกว้างจอลบด้วย Padding(60px) และลบคอลัมน์หัวข้อ(140px) แล้วหาร 3 เพื่อให้เห็นพอดีเป๊ะ */
+      width: calc((95vw - 60px - 140px) / 3);
+      min-width: calc((95vw - 60px - 140px) / 3);
+      max-width: calc((95vw - 60px - 140px) / 3);
+      word-wrap: break-word;
+  }
+
+  /* สำหรับหน้าจอเล็กกว่าคอมพิวเตอร์ กำหนดขนาดขั้นต่ำกันคอลัมน์บีบเกินไป */
+  @media (max-width: 1024px) {
+      .mpi-data-col {
+          width: 320px;
+          min-width: 320px;
+          max-width: 320px;
+      }
+  }
   /* -------------------------------------- */
 
   /* Transitions & Animations */
